@@ -20,9 +20,9 @@ pub enum FilterShow {
 #[derive(Clone, Debug)]
 pub enum In {
   NewTodo(String, bool),
-  NewTodoInput(HtmlElement),
+  NewTodoInput(HtmlInputElement),
   Filter(FilterShow),
-  CompletionToggleInput(HtmlElement),
+  CompletionToggleInput(HtmlInputElement),
   ChangedCompletion(usize, bool),
   ToggleCompleteAll,
   TodoListUl(HtmlElement),
@@ -144,6 +144,7 @@ impl App {
 impl Component for App {
   type ModelMsg = In;
   type ViewMsg = Out;
+  type DomNode = HtmlElement;
 
   fn update(&mut self, msg: &In, tx_view: &Transmitter<Out>, sub: &Subscriber<In>) {
     match msg {
@@ -166,9 +167,6 @@ impl Component for App {
             }
           }
         );
-        // Build it, append it to our ul and then store it. If the component goes
-        // out of scope it will be dropped and removed from the DOM automatically.
-        component.build();
         if *complete {
           component.update(&TodoIn::SetCompletion(true));
         }
@@ -185,13 +183,9 @@ impl Component for App {
         tx_view.send(&Out::NumItems(self.todos.len()));
         tx_view.send(&Out::ShouldShowTodoList(true));
       }
-      In::NewTodoInput(el) => {
-        let input =
-          el
-          .clone()
-          .dyn_into::<HtmlInputElement>()
-          .expect("todo input is not an input element");
+      In::NewTodoInput(input) => {
         self.todo_input = Some(input.clone());
+        let input = input.clone();
         timeout(0, move || {
           input
             .focus()
@@ -214,12 +208,8 @@ impl Component for App {
           });
         tx_view.send(&Out::SelectedFilter(show.clone()));
       }
-      In::CompletionToggleInput(el) => {
-        self.todo_toggle_input =
-          el
-          .clone()
-          .dyn_into::<HtmlInputElement>()
-          .ok();
+      In::CompletionToggleInput(input) => {
+        self.todo_toggle_input = Some(input.clone());
         tx_view.send(&Out::ShouldShowCompleteButton(self.are_any_complete()));
       }
       In::ChangedCompletion(_index, _is_complete) => {
@@ -292,7 +282,7 @@ impl Component for App {
       .expect("Could not store todos");
   }
 
-  fn builder(&self, tx: Transmitter<In>, rx: Receiver<Out>) -> GizmoBuilder {
+  fn view(&self, tx: Transmitter<In>, rx: Receiver<Out>) -> Gizmo<HtmlElement> {
     let rx_display =
       rx.branch_filter_map(|msg| {
         match msg {
@@ -342,7 +332,7 @@ impl Component for App {
                   _ => None
                 }
               }))
-              .tx_post_build(tx.contra_map(|el:&HtmlElement| In::NewTodoInput(el.clone())))
+              .tx_post_build(tx.contra_map(|el:&HtmlInputElement| In::NewTodoInput(el.clone())))
           )
       )
       .with(
@@ -357,7 +347,7 @@ impl Component for App {
               .class("toggle-all")
               .tx_post_build(
                 tx.contra_map(
-                  |el:&HtmlElement| In::CompletionToggleInput(el.clone())
+                  |el:&HtmlInputElement| In::CompletionToggleInput(el.clone())
                 )
               )
               .tx_on("click", tx.contra_map(|_| In::ToggleCompleteAll))

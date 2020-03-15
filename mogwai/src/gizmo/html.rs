@@ -1,17 +1,26 @@
 //! Contains [`GizmoBuilder`] constructors for all html5 tags.
 //! Each of these constructor functions is shorthand for
 //! ```rust,ignore
-//! GizmoBuilder::new("...")
+//! Gizmo::element("...")
 //! ```
 //!
 //! [`GizmoBuilder`]: ../struct.GizmoBuilder.html
-use super::GizmoBuilder;
+use super::Gizmo;
+use super::super::utils as utils;
+use wasm_bindgen::{JsCast, UnwrapThrowExt};
+use web_sys::{HtmlElement, HtmlInputElement};
 
 /// From https://doc.rust-lang.org/rust-by-example/macros/designators.html
 macro_rules! tag_constructor {
   ( $func_name:ident ) => {
-    pub fn $func_name() -> GizmoBuilder {
-      GizmoBuilder::new(stringify!($func_name))
+    pub fn $func_name() -> Gizmo<HtmlElement> {
+      let element =
+        utils::document()
+        .create_element(stringify!($func_name))
+        .unwrap_throw()
+        .dyn_into()
+        .unwrap_throw();
+      Gizmo::wrapping(element)
     }
   };
 
@@ -65,7 +74,6 @@ tag_constructor!{
   datalist,
   fieldset,
   form,
-  input,
   keygen,
   label,
   legend,
@@ -74,6 +82,16 @@ tag_constructor!{
   option,
   select,
   textarea
+}
+
+pub fn input() -> Gizmo<HtmlInputElement> {
+  let element:HtmlInputElement =
+    utils::document()
+    .create_element(stringify!($func_name))
+    .unwrap_throw()
+    .dyn_into()
+    .unwrap_throw();
+  Gizmo::wrapping(element)
 }
 
 // formatting

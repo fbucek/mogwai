@@ -31,8 +31,8 @@ impl Todo {
 
 #[derive(Clone)]
 pub enum TodoIn {
-  CompletionToggleInput(HtmlElement),
-  EditInput(HtmlElement),
+  CompletionToggleInput(HtmlInputElement),
+  EditInput(HtmlInputElement),
   ToggleCompletion,
   SetCompletion(bool),
   StartEditing,
@@ -74,6 +74,7 @@ impl TodoOut {
 impl Component for Todo {
   type ModelMsg = TodoIn;
   type ViewMsg = TodoOut;
+  type DomNode = HtmlElement;
 
   fn update(&mut self, msg: &TodoIn, tx_view: &Transmitter<TodoOut>, _: &Subscriber<TodoIn>) {
     match msg {
@@ -167,7 +168,7 @@ impl Component for Todo {
     }
   }
 
-  fn builder(&self, tx: Transmitter<TodoIn>, rx: Receiver<TodoOut>) -> GizmoBuilder {
+  fn view(&self, tx: Transmitter<TodoIn>, rx: Receiver<TodoOut>) -> Gizmo<HtmlElement> {
     li()
       .rx_class("", rx.branch_filter_map(|msg| msg.as_list_class()))
       .rx_style("display", "block", rx.branch_filter_map(|msg| {
@@ -190,7 +191,7 @@ impl Component for Todo {
           .with(
             input()
               .tx_post_build(
-                tx.contra_map(|el:&HtmlElement| {
+                tx.contra_map(|el:&HtmlInputElement| {
                   TodoIn::CompletionToggleInput(el.clone())
                 })
               )
@@ -219,7 +220,7 @@ impl Component for Todo {
       .with(
         input()
           .tx_post_build(
-            tx.contra_map(|el:&HtmlElement| TodoIn::EditInput(el.clone()))
+            tx.contra_map(|el:&HtmlInputElement| TodoIn::EditInput(el.clone()))
           )
           .class("edit")
           .value(&self.name, )

@@ -2,6 +2,7 @@
 
 members = [
   "mogwai",
+  #"design",
   "examples/sandbox",
   "examples/todomvc"
 ]
