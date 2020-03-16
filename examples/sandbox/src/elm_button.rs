@@ -1,7 +1,7 @@
 use web_sys::HtmlElement;
 use mogwai::component::{subscriber::Subscriber, Component};
 use mogwai::gizmo::Gizmo;
-use mogwai::gizmo::tags::button;
+use mogwai::gizmo::html::button;
 use mogwai::txrx::{Receiver, Transmitter};
 
 pub struct Button {
